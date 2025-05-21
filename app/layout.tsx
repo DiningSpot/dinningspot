@@ -7,9 +7,20 @@ import { ThemeProvider } from "./theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Restaurant Menu",
-  description: "Browse our delicious menu items",
-    generator: 'v0.dev'
+  title: "Dinning Spot | Next Gen Food Menu",
+  description: "Browse through delicious menu items with a digital touch at you handset",
+  openGraph: {
+    title: "Dinning Spot | Next Gen Food Menu",
+    description: "Browse through delicious menu items with a digital touch at you handset",
+    images: [
+      {
+        url: "/meta.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Dinning Spot Menu Preview",
+      },
+    ],
+  },
 }
 
 export default function RootLayout({
