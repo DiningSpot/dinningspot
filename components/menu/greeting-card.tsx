@@ -1,7 +1,9 @@
+
 "use client"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 
 interface GreetingCardProps {
   name: string
@@ -14,54 +16,49 @@ export default function GreetingCard({
   onClose, 
   onSubmit
 }: GreetingCardProps) {
-  const [isVisible] = useState(true)
   const [outletIcon, setOutletIcon] = useState<string | null>(null)
   const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-
-  // Static API endpoint
-  const API_ENDPOINT = "https://api.foodmenuwebbuilder.technolitics.com/api/v1/foodmenu-website-builder/website/outlet-management/get-outlet-by-id/682c642284d8ab75f25dc9f7"
+  const pathname = usePathname()
 
   useEffect(() => {
     const fetchOutletIcon = async () => {
       setLoadingState('loading')
-      console.log('[1] Starting fetch from:', API_ENDPOINT)
       
       try {
-        const response = await fetch(API_ENDPOINT)
-        console.log('[2] Response status:', response.status)
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+        // Extract outlet ID from URL
+        const pathParts = pathname.split('/').filter(Boolean)
+        const outletId = pathParts[pathParts.length - 1]
+        
+        if (!outletId) {
+          throw new Error('No outlet ID found in URL')
         }
+
+        const API_ENDPOINT = `https://api.foodmenuwebbuilder.technolitics.com/api/v1/foodmenu-website-builder/website/outlet-management/get-outlet-by-id/${outletId}`
+        
+        const response = await fetch(API_ENDPOINT)
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
         const data = await response.json()
-        console.log('[3] API Response:', data)
-
         const icon = data.data?.icon
-        console.log('[4] Extracted icon:', icon)
 
-        if (!icon) {
-          throw new Error('No icon found in response')
-        }
+        if (!icon) throw new Error('No icon found in response')
 
         setOutletIcon(icon)
         setLoadingState('success')
       } catch (error) {
-        console.error('[5] Fetch error:', error)
+        console.error('Fetch error:', error)
         setLoadingState('error')
-        // Fallback to static icon if fetch fails
         setOutletIcon("1747734790831_html-5.png")
       }
     }
 
     fetchOutletIcon()
-  }, [])
+  }, [pathname])
 
-  // Auto-submit after a short delay
   useEffect(() => {
     const timer = setTimeout(() => {
       onSubmit()
-    }, 2000)
+    }, 3000)
 
     return () => clearTimeout(timer)
   }, [onSubmit])
@@ -70,29 +67,19 @@ export default function GreetingCard({
     ? `https://technolitics-s3-bucket.s3.ap-south-1.amazonaws.com/foodmenu-websitebuilder-s3-bucket/${outletIcon}`
     : null
 
-  console.log('[6] Current state:', {
-    loadingState,
-    outletIcon,
-    imageUrl
-  })
-
   return (
-    <div className="fixed inset-0 bg-white/70 backdrop-blur-[8px] flex items-center justify-center z-50 h-screen w-screen">
+    <div className="fixed inset-0 bg-white/70 backdrop-blur-[8px] flex items-center justify-center z-[1002] h-screen w-screen">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 0.95 }}
-        transition={{ duration: 0.3 }}
         className="w-full h-full max-w-none max-h-none relative flex items-center justify-center"
+        initial={{ opacity: 0, y: -100 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -100 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <div className="text-center mb-6">
-          {/* Outlet Icon */}
+          {/* Outlet Icon - No animation */}
           {imageUrl && (
-            <motion.div 
-              className="flex justify-center mb-4"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
+            <div className="flex justify-center mb-4">
               <div className="w-32 h-32 relative">
                 <Image
                   src={imageUrl}
@@ -101,12 +88,7 @@ export default function GreetingCard({
                   className="object-contain"
                   unoptimized
                   priority
-                  onError={(e) => {
-                    console.error('[7] Image load error:', e)
-                    // Fallback to static icon if dynamic fails
-                    setOutletIcon("1747734790831_html-5.png")
-                  }}
-                  onLoad={() => console.log('[8] Image loaded successfully')}
+                  onError={() => setOutletIcon("1747734790831_html-5.png")}
                 />
                 {loadingState === 'loading' && (
                   <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
@@ -114,51 +96,39 @@ export default function GreetingCard({
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
 
-          {/* Loading states */}
           {loadingState === 'error' && (
             <p className="text-red-500 mb-4">Using fallback icon</p>
           )}
 
-          {/* Greeting */}
+          {/* Greeting - Only hand emoji has animation */}
           <div className="flex items-center justify-center">
             <motion.div
-              initial={{ rotate: -20, opacity: 0 }}
-              animate={{ rotate: [0, 15, 0, 15, 0], opacity: 1 }}
+              initial={{ rotate: -20 }}
+              animate={{ rotate: [0, 15, 0, 15, 0] }}
               transition={{
                 duration: 1.5,
-                repeat: Number.POSITIVE_INFINITY,
+                repeat: Infinity,
                 repeatDelay: 1,
-                ease: "easeInOut",
-                opacity: { duration: 0.3 }
+                ease: "easeInOut"
               }}
-              className="text-5xl mr-4"
               style={{ transformOrigin: "bottom center" }}
+              className="text-5xl mr-4"
             >
               👋
             </motion.div>
-            <motion.h2 
-              className="text-4xl font-bold text-black"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+            <h2 className="text-4xl font-bold text-black">
               Hi, {name}!
-            </motion.h2>
+            </h2>
           </div>
 
-          <motion.p 
-            className="text-black/70 mt-4 text-xl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
+          <p className="text-black/70 mt-4 text-xl">
             Welcome back! Good to see you.
-          </motion.p>
+          </p>
         </div>
       </motion.div>
     </div>
   )
-}   
+}

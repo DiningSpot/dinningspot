@@ -437,11 +437,15 @@ export default function FeedbackPage({ onClose, websiteId }: FeedbackPageProps) 
         name: userDataToUse.name,
         mobileNumber: userDataToUse.phone,
         remarks: feedbackForm.remarks,
+        strings:{
         stringOne: feedbackForm.overallExperience,
         stringTwo: feedbackForm.foodQuality,
         stringThree: feedbackForm.staffService,
         stringFour: feedbackForm.cleanliness,
-        arrayOne: imageFileNames, // All images in a single array
+        },
+        arrays:{
+        arrayOne: imageFileNames,
+        }, // All images in a single array
         enquiryId: "68272ea9ff4b7ea66624ef2c", // Add the fixed enquiry ID to all feedback submissions
       }
 

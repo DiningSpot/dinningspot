@@ -66,6 +66,14 @@ body {
   -ms-overflow-style: none; /* IE and Edge */
 }
 
+.swiper-pagination{
+  bottom: -5px !important;
+}
+.swiper-pagination-bullet-active{
+background: #d55411 !important;
+}
+
+
 *::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
