@@ -80,7 +80,7 @@ export default function GreetingCard({
           {/* Outlet Icon - No animation */}
           {imageUrl && (
             <div className="flex justify-center mb-4">
-              <div className="w-32 h-32 relative">
+              <div className="w-24 h-24 md:w-32 md:h-32 relative">
                 <Image
                   src={imageUrl}
                   alt="Outlet Icon"
@@ -124,7 +124,7 @@ export default function GreetingCard({
             </h2>
           </div>
 
-          <p className="text-black/70 mt-4 text-xl">
+          <p className="text-black/70 mt-4 text-md  md:text-xl">
             Welcome back! Good to see you.
           </p>
         </div>

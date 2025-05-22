@@ -148,7 +148,7 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
   const [showProductModal, setShowProductModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [showForm, setShowForm] = useState(false)
-  const [showPreloader, setShowPreloader] = useState(true)
+  const [showPreloader, setShowPreloader] = useState(false)
   const [showOfferPopup, setShowOfferPopup] = useState(false)
   const [outletIcon, setOutletIcon] = useState<string | null>(null)
   const [hasUserData, setHasUserData] = useState(false)
@@ -182,6 +182,7 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
       if (greetingShown) {
         console.log("[MenuCard] Greeting card already shown in this session")
         setShowForm(false)
+        setHasUserData(true)
         return
       }
       const storageKey = `userData_${websiteId}`
@@ -211,6 +212,7 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
         }
       }
       if (foundUserData) {
+        setHasUserData(true)
         setShowForm(true)
       } else {
         setShowForm(true)
@@ -220,6 +222,21 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
       setShowForm(true)
     }
   }, [websiteId])
+
+  // Handle preloader visibility for initial landing only
+  useEffect(() => {
+    const isInitialLanding = !sessionStorage.getItem(`initialLanding_${websiteId}`)
+    if (isInitialLanding && !hasUserData) {
+      setShowPreloader(true)
+      sessionStorage.setItem(`initialLanding_${websiteId}`, "true")
+      const timer = setTimeout(() => {
+        setShowPreloader(false)
+      }, 1500)
+      return () => clearTimeout(timer)
+    } else {
+      setShowPreloader(false)
+    }
+  }, [hasUserData, websiteId])
 
   // Handle MinimalForm close or submit
   const handleFormCloseOrSubmit = () => {
@@ -316,13 +333,6 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
       loadData()
     }
   }, [outletId, websiteId])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowPreloader(false)
-    }, 1500)
-    return () => clearTimeout(timer)
-  }, [])
 
   const getProductCount = (categoryId: string | null) => {
     if (!foodItems) return 0
