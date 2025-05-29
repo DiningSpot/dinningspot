@@ -524,6 +524,7 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
               getIconComponent={getIconComponent}
               isMobile={isMobile}
               websiteId={websiteId}
+              outletId={outletId}
             />
           )}
 
@@ -808,6 +809,7 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
           {showOfferPopup && (
             <OfferPopup
               websiteId={websiteId}
+              outletId={outletId}
               onClose={() => setShowOfferPopup(false)}
             />
           )}

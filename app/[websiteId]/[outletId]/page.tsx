@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import MenuCard from "@/app/menu-card"
 import { useParams } from "next/navigation"
 import Image from "next/image"
-
+import { getProjectId } from "@/constants/index"
 export default function MenuCardPage() {
   const params = useParams()
   const websiteId = params?.websiteId as string
@@ -13,7 +13,7 @@ export default function MenuCardPage() {
   const [outletIcon, setOutletIcon] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showPreloader, setShowPreloader] = useState(true)
-
+console.log(getProjectId());
   // Validate params and fetch outlet icon
   useEffect(() => {
     if (!websiteId || !outletId) {

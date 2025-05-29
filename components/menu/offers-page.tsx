@@ -1,94 +1,113 @@
-"use client"
-import { X } from "lucide-react"
-import OfferCard from "./offer-card"
-import OfferDetail from "./offer-detail"
-import { useState, useEffect } from "react"
-import { API_BASE_URL, IMAGE_BASE_URL } from "@/constants"
+"use client";
+
+import { X } from "lucide-react";
+import OfferCard from "./offer-card";
+import OfferDetail from "./offer-detail";
+import { useState, useEffect } from "react";
+import { API_BASE_URL, IMAGE_BASE_URL } from "@/constants";
 
 interface OfferValidity {
-  start: string
-  end: string
+  start: string;
+  end: string;
+}
+
+interface Outlet {
+  _id: string;
 }
 
 interface Offer {
-  _id: string
-  offerImage?: string
-  title: string
-  subTitle: string
-  description: string
-  minOrderValue: number
-  validity: OfferValidity
-  status: string
+  _id: string;
+  offerImage?: string;
+  title: string;
+  subTitle: string;
+  description: string;
+  minOrderValue: number;
+  validity: OfferValidity;
+  status: string;
+  applicableOutlets: Outlet[];
 }
 
 interface OffersPageProps {
-  onClose: () => void
-  getIconComponent: (iconName: string, size?: number) => JSX.Element
-  isMobile: boolean
-  websiteId: string
+  onClose: () => void;
+  getIconComponent: (iconName: string, size?: number) => JSX.Element;
+  isMobile: boolean;
+  websiteId: string;
+  outletId: string;
 }
 
-export default function OffersPage({ onClose, getIconComponent, isMobile, websiteId }: OffersPageProps) {
-  const [showOfferDetail, setShowOfferDetail] = useState(false)
-  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
-  const [offers, setOffers] = useState<Offer[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export default function OffersPage({ onClose, getIconComponent, isMobile, websiteId, outletId }: OffersPageProps) {
+  const [showOfferDetail, setShowOfferDetail] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOffers = async () => {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
       try {
-        const response = await fetch(`${API_BASE_URL}/website/offers/get-all-offers/${websiteId}`)
+        const response = await fetch(`${API_BASE_URL}/website/offers/get-all-offers/${websiteId}`);
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch offers: ${response.status}`)
+          throw new Error(`Failed to fetch offers: ${response.status}`);
         }
 
-        const data = await response.json()
+        const data = await response.json();
+        console.log("Fetched offers data:", data);
 
         if (data.data && Array.isArray(data.data)) {
-          setOffers(data.data)
+          // Filter offers where outletId matches any _id in applicableOutlets
+          const filteredOffers = data.data.filter((offer: Offer) => {
+            const isApplicable = offer.applicableOutlets.some(
+              (outlet: Outlet) => outlet._id === outletId
+            );
+            console.log(`Offer ${offer._id} applicable for outlet ${outletId}:`, isApplicable);
+            return isApplicable;
+          });
+          setOffers(filteredOffers);
+          console.log("Filtered offers:", filteredOffers);
         } else {
-          setOffers([])
+          setOffers([]);
+          console.log("No offers found in response");
         }
       } catch (err) {
-        console.error("Error fetching offers:", err)
-        setError(err instanceof Error ? err.message : "Failed to load offers")
-        setOffers([])
+        console.error("Error fetching offers:", err);
+        setError(err instanceof Error ? err.message : "Failed to load offers");
+        setOffers([]);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchOffers()
-  }, [websiteId])
+    fetchOffers();
+  }, [websiteId, outletId]); // Added outletId to dependencies
 
   const handleViewOfferDetails = (offer: Offer) => {
     // Check if offer is expired
-    const isExpired = new Date(offer.validity.end) < new Date()
+    const isExpired = new Date(offer.validity.end) < new Date();
     if (isExpired) {
-      return // Don't open detail view for expired offers
+      console.log(`Offer ${offer._id} is expired, not opening details`);
+      return; // Don't open detail view for expired offers
     }
 
-    setSelectedOffer(offer)
-    setShowOfferDetail(true)
-  }
+    setSelectedOffer(offer);
+    setShowOfferDetail(true);
+  };
 
   if (showOfferDetail && selectedOffer) {
-    return <OfferDetail offer={selectedOffer} onBack={() => setShowOfferDetail(false)} />
+    return <OfferDetail offer={selectedOffer} onBack={() => setShowOfferDetail(false)} />;
   }
 
   // Format the validity date for display
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleDateString("en-IN", {
       day: "numeric",
       month: "short",
       year: "numeric",
-    })
-  }
+    });
+  };
 
   return (
     <div className="fixed inset-0 bg-[#f3f4f6] dark:bg-[#090e17] z-50 overflow-y-auto">
@@ -118,7 +137,7 @@ export default function OffersPage({ onClose, getIconComponent, isMobile, websit
           </div>
         ) : offers.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-gray-500 dark:text-gray-400">No offers available at the moment.</p>
+            <p className="text-gray-500 dark:text-gray-400">No offers available for this outlet.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -140,5 +159,5 @@ export default function OffersPage({ onClose, getIconComponent, isMobile, websit
         )}
       </div>
     </div>
-  )
+  );
 }

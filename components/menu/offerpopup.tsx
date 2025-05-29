@@ -1,86 +1,105 @@
-"use client"
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
-import { X } from "lucide-react"
-import { Swiper, SwiperSlide } from "swiper/react"
-import { Autoplay, Pagination } from "swiper/modules"
-import "swiper/css"
-import "swiper/css/pagination"
-import { API_BASE_URL, IMAGE_BASE_URL } from "@/constants"
+"use client";
+
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
+import { API_BASE_URL, IMAGE_BASE_URL } from "@/constants";
 
 interface OfferValidity {
-  start: string
-  end: string
+  start: string;
+  end: string;
+}
+
+interface Outlet {
+  _id: string;
 }
 
 interface Offer {
-  _id: string
-  offerImage?: string
-  title: string
-  subTitle: string
-  description: string
-  minOrderValue: number
-  validity: OfferValidity
-  status: string
+  _id: string;
+  offerImage?: string;
+  title: string;
+  subTitle: string;
+  description: string;
+  minOrderValue: number;
+  validity: OfferValidity;
+  status: string;
+  applicableOutlets: Outlet[];
 }
 
 interface OfferPopupProps {
-  websiteId: string
-  onClose: () => void
+  websiteId: string;
+  outletId: string;
+  onClose: () => void;
 }
 
-export default function OfferPopup({ websiteId, onClose }: OfferPopupProps) {
-  const [offers, setOffers] = useState<Offer[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export default function OfferPopup({ websiteId, outletId, onClose }: OfferPopupProps) {
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOffers = async () => {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
       try {
-        console.log("[OfferPopup] Fetching offers from:", `${API_BASE_URL}/website/offers/get-all-offers/${websiteId}`)
-        const response = await fetch(`${API_BASE_URL}/website/offers/get-all-offers/${websiteId}`)
+        console.log("[OfferPopup] Fetching offers from:", `${API_BASE_URL}/website/offers/get-all-offers/${websiteId}`);
+        const response = await fetch(`${API_BASE_URL}/website/offers/get-all-offers/${websiteId}`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch offers: ${response.status}`)
+          throw new Error(`Failed to fetch offers: ${response.status}`);
         }
-        const data = await response.json()
-        console.log("[OfferPopup] API response data:", data)
+        const data = await response.json();
+        console.log("[OfferPopup] API response data:", data);
+
         if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-          // Filter out expired offers
-          const validOffers = data.data.filter((offer: Offer) => new Date(offer.validity.end) >= new Date())
+          // Filter out expired offers and those not applicable to outletId
+          const validOffers = data.data.filter((offer: Offer) => {
+            const isNotExpired = new Date(offer.validity.end) >= new Date();
+            const isApplicable = offer.applicableOutlets.some(
+              (outlet: Outlet) => outlet._id === outletId
+            );
+            console.log(
+              `[OfferPopup] Offer ${offer._id} - Expired: ${!isNotExpired}, Applicable for outlet ${outletId}: ${isApplicable}`
+            );
+            return isNotExpired && isApplicable;
+          });
+
           if (validOffers.length === 0) {
-            console.log("[OfferPopup] No valid offers found, closing")
-            onClose()
+            console.log("[OfferPopup] No valid offers found for outlet, closing");
+            onClose();
           }
-          setOffers(validOffers)
+          setOffers(validOffers);
+          console.log("[OfferPopup] Filtered offers:", validOffers);
         } else {
-          console.log("[OfferPopup] No offers found, closing")
-          onClose()
+          console.log("[OfferPopup] No offers found, closing");
+          onClose();
         }
       } catch (err) {
-        console.error("[OfferPopup] Error fetching offers:", err)
-        setError(err instanceof Error ? err.message : "Failed to load offers")
-        onClose()
+        console.error("[OfferPopup] Error fetching offers:", err);
+        setError(err instanceof Error ? err.message : "Failed to load offers");
+        onClose();
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchOffers()
-  }, [websiteId, onClose])
+    fetchOffers();
+  }, [websiteId, outletId, onClose]); // Added outletId to dependencies
 
   // Preload images to improve carousel performance
   useEffect(() => {
     offers.forEach((offer) => {
       if (offer.offerImage) {
-        const img = new Image()
-        img.src = `${IMAGE_BASE_URL}${offer.offerImage}`
-        img.onload = () => console.log("[OfferPopup] Image preloaded successfully:", img.src)
-        img.onerror = () => console.error("[OfferPopup] Failed to preload image:", img.src)
+        const img = new Image();
+        img.src = `${IMAGE_BASE_URL}${offer.offerImage}`;
+        img.onload = () => console.log("[OfferPopup] Image preloaded successfully:", img.src);
+        img.onerror = () => console.error("[OfferPopup] Failed to preload image:", img.src);
       }
-    })
-  }, [offers])
+    });
+  }, [offers]);
 
   if (isLoading) {
     return (
@@ -93,11 +112,11 @@ export default function OfferPopup({ websiteId, onClose }: OfferPopupProps) {
       >
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
       </motion.div>
-    )
+    );
   }
 
   if (!offers.length || error) {
-    return null // Silently close without rendering
+    return null; // Silently close without rendering
   }
 
   return (
@@ -134,8 +153,8 @@ export default function OfferPopup({ websiteId, onClose }: OfferPopupProps) {
                       alt={offer.title}
                       className="w-full h-[100%] object-cover rounded-lg mb-4"
                       onError={(e) => {
-                        console.error("[OfferPopup] Image failed to load:", `${IMAGE_BASE_URL}${offer.offerImage}`)
-                        e.currentTarget.style.display = "none"
+                        console.error("[OfferPopup] Image failed to load:", `${IMAGE_BASE_URL}${offer.offerImage}`);
+                        e.currentTarget.style.display = "none";
                       }}
                     />
                   ) : (
@@ -150,5 +169,5 @@ export default function OfferPopup({ websiteId, onClose }: OfferPopupProps) {
         </div>
       </div>
     </motion.div>
-  )
+  );
 }
