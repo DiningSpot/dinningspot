@@ -972,7 +972,7 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
                 className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
                 <span className="font-normal">Powered by </span>
-                <span className="font-semibold">Technolitics</span>
+                <span className="font-semibold">Dinning Spot</span>
               </a>
             </div>
           </div>
