@@ -112,6 +112,16 @@ async function fetchFeatureTypes(websiteId: string) {
   return data.data?.featureTypes || []
 }
 
+// New API function to fetch website data
+async function fetchWebsiteData(websiteId: string) {
+  const response = await fetch(
+    `https://api.foodmenuwebbuilder.technolitics.com/api/v1/foodmenu-website-builder/website/auth/get-website-by-uid/${websiteId}`,
+  )
+  if (!response.ok) throw new Error("Could not fetch website data")
+  const data = await response.json()
+  return data.data || null
+}
+
 function getInitials(title: string | null): string {
   if (!title) return ""
   const words = title.split(" ")
@@ -152,6 +162,13 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
   const [showOfferPopup, setShowOfferPopup] = useState(false)
   const [outletIcon, setOutletIcon] = useState<string | null>(null)
   const [hasUserData, setHasUserData] = useState(false)
+  const [gtmId, setGtmId] = useState<string | null>(null)
+  const [fbPixelId, setFbPixelId] = useState<string | null>(null)
+
+  // Static IDs for GA4 and Facebook Pixel (replace with actual IDs)
+  const staticGa4Id = "G-STATICID123"
+  const staticFbPixelId = "STATICFBPIXEL123"
+
   const featureTypeColors: Record<string, string> = {
     "New Arrivals": "#FF7A00",
     Recommended: "#9C27B0",
@@ -174,6 +191,168 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
     "House Special": "#43A047",
     Popular: "#FB8C00",
   }
+
+  // Fetch website data for dynamic GTM and FB Pixel IDs
+  useEffect(() => {
+    const loadWebsiteData = async () => {
+      try {
+        const websiteData = await fetchWebsiteData(websiteId)
+        if (websiteData?.analyticsDetails) {
+          setGtmId(websiteData.analyticsDetails.gtmId || null)
+          setFbPixelId(websiteData.analyticsDetails.fbPixelId || null)
+        }
+      } catch (error) {
+        console.error("[MenuCard] Error fetching website data:", error)
+        setGtmId(null)
+        setFbPixelId(null)
+      }
+    }
+
+    if (websiteId) {
+      loadWebsiteData()
+    }
+  }, [websiteId])
+
+  // Inject static GA4 and FB Pixel scripts
+  useEffect(() => {
+    // Static GA4 script
+    if (staticGa4Id && !document.getElementById(`ga4-script-${staticGa4Id}`)) {
+      // GA4 script (head)
+      const ga4Script = document.createElement("script")
+      ga4Script.id = `ga4-script-${staticGa4Id}`
+      ga4Script.async = true
+      ga4Script.src = `https://www.googletagmanager.com/gtag/js?id=${staticGa4Id}`
+      document.head.appendChild(ga4Script)
+
+      const ga4ConfigScript = document.createElement("script")
+      ga4ConfigScript.id = `ga4-config-script-${staticGa4Id}`
+      ga4ConfigScript.innerHTML = `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${staticGa4Id}');
+      `
+      document.head.appendChild(ga4ConfigScript)
+
+      console.log("[MenuCard] Static Google Analytics 4 script added for Measurement ID:", staticGa4Id)
+    }
+
+    // Static FB Pixel script
+    if (staticFbPixelId && !document.getElementById(`fb-pixel-script-static-${staticFbPixelId}`)) {
+      // FB Pixel script (head)
+      const fbScript = document.createElement("script")
+      fbScript.id = `fb-pixel-script-static-${staticFbPixelId}`
+      fbScript.async = true
+      fbScript.innerHTML = `
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '${staticFbPixelId}');
+        fbq('track', 'PageView');
+      `
+      document.head.appendChild(fbScript)
+
+      // FB Pixel noscript (body)
+      const fbNoScript = document.createElement("noscript")
+      fbNoScript.id = `fb-pixel-noscript-static-${staticFbPixelId}`
+      fbNoScript.innerHTML = `
+        <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${staticFbPixelId}&ev=PageView&noscript=1"/>
+      `
+      document.body.prepend(fbNoScript)
+
+      console.log("[MenuCard] Static Facebook Pixel script added for Pixel ID:", staticFbPixelId)
+    }
+
+    // Cleanup static scripts on unmount
+    return () => {
+      if (staticGa4Id) {
+        const ga4Script = document.getElementById(`ga4-script-${staticGa4Id}`)
+        const ga4ConfigScript = document.getElementById(`ga4-config-script-${staticGa4Id}`)
+        if (ga4Script) ga4Script.remove()
+        if (ga4ConfigScript) ga4ConfigScript.remove()
+      }
+      if (staticFbPixelId) {
+        const fbScript = document.getElementById(`fb-pixel-script-static-${staticFbPixelId}`)
+        const fbNoScript = document.getElementById(`fb-pixel-noscript-static-${staticFbPixelId}`)
+        if (fbScript) fbScript.remove()
+        if (fbNoScript) fbNoScript.remove()
+      }
+    }
+  }, [staticGa4Id, staticFbPixelId])
+
+  // Inject dynamic GTM and FB Pixel scripts
+  useEffect(() => {
+    // Dynamic GTM script
+    if (gtmId && !document.getElementById(`gtm-script-${gtmId}`)) {
+      // GTM script (head)
+      const gtmScript = document.createElement("script")
+      gtmScript.id = `gtm-script-${gtmId}`
+      gtmScript.async = true
+      gtmScript.innerHTML = `
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+        var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','${gtmId}');
+      `
+      document.head.appendChild(gtmScript)
+
+      // GTM noscript (body)
+      const gtmNoScript = document.createElement("noscript")
+      gtmNoScript.id = `gtm-noscript-${gtmId}`
+      gtmNoScript.innerHTML = `
+        <iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+      `
+      document.body.prepend(gtmNoScript)
+
+      console.log("[MenuCard] Dynamic Google Tag Manager script added for GTM ID:", gtmId)
+    }
+
+    // Dynamic FB Pixel script
+    if (fbPixelId && fbPixelId !== staticFbPixelId && !document.getElementById(`fb-pixel-script-dynamic-${fbPixelId}`)) {
+      // FB Pixel script (head)
+      const fbScript = document.createElement("script")
+      fbScript.id = `fb-pixel-script-dynamic-${fbPixelId}`
+      fbScript.async = true
+      fbScript.innerHTML = `
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '${fbPixelId}');
+        fbq('track', 'PageView');
+      `
+      document.head.appendChild(fbScript)
+
+      // FB Pixel noscript (body)
+      const fbNoScript = document.createElement("noscript")
+      fbNoScript.id = `fb-pixel-noscript-dynamic-${fbPixelId}`
+      fbNoScript.innerHTML = `
+        <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${fbPixelId}&ev=PageView&noscript=1"/>
+      `
+      document.body.prepend(fbNoScript)
+
+      console.log("[MenuCard] Dynamic Facebook Pixel script added for Pixel ID:", fbPixelId)
+    }
+
+    // Cleanup dynamic scripts on unmount
+    return () => {
+      if (gtmId) {
+        const gtmScript = document.getElementById(`gtm-script-${gtmId}`)
+        const gtmNoScript = document.getElementById(`gtm-noscript-${gtmId}`)
+        if (gtmScript) gtmScript.remove()
+        if (gtmNoScript) gtmNoScript.remove()
+      }
+      if (fbPixelId && fbPixelId !== staticFbPixelId) {
+        const fbScript = document.getElementById(`fb-pixel-script-dynamic-${fbPixelId}`)
+        const fbNoScript = document.getElementById(`fb-pixel-noscript-dynamic-${fbPixelId}`)
+        if (fbScript) fbScript.remove()
+        if (fbNoScript) fbNoScript.remove()
+      }
+    }
+  }, [gtmId, fbPixelId, staticFbPixelId])
 
   // Check for user data and greeting status on component mount
   useEffect(() => {
