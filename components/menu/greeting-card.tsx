@@ -88,7 +88,7 @@ export default function GreetingCard({
                   className="object-contain"
                   unoptimized
                   priority
-                  onError={() => setOutletIcon("1747734790831_html-5.png")}
+                  onError={() => setOutletIcon("")}
                 />
                 {loadingState === 'loading' && (
                   <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
@@ -100,7 +100,7 @@ export default function GreetingCard({
           )}
 
           {loadingState === 'error' && (
-            <p className="text-red-500 mb-4">Using fallback icon</p>
+            <p className="text-red-500 mb-4"></p>
           )}
 
           {/* Greeting - Only hand emoji has animation */}
