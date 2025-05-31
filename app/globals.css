@@ -87,3 +87,48 @@ background: #d55411 !important;
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+
+.p-desc {
+font-size: 16px !important;
+}
+
+.p-desc ul{
+font-size: 14px !important;
+margin-top: 18px !important;
+}
+
+.p-desc table{
+
+width: 100%;
+padding: 15px !important;
+margin-top: 20px;
+
+}
+
+.p-desc th{
+text-align: left;
+background-color: #f4f6f8 !important;
+color: black;
+
+padding: 10px !important;
+width: 50% !important;
+
+font-weight: bold;
+}
+
+
+.p-desc td{
+text-align: left;
+padding: 10px !important;
+width: 50% !important;
+
+}
+
+.p-desc tr{
+  border-bottom:2px dashed #f4f6f8 !important;
+}
+
+.p-desc tr:hover{
+  background-color: #f4f6f8 !important;
+}

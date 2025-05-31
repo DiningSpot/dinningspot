@@ -32,7 +32,7 @@ export default function HamburgerMenu({ isOpen, onClose, onSectionSelect }: Hamb
             <X size={24} />
           </button>
         </div>
-
+<div className="flex flex-col min-h-[90vh] justify-between">
         {/* Menu Cards */}
         <div className="grid grid-cols-1 gap-4">
           {/* Offers Card */}
@@ -95,6 +95,18 @@ export default function HamburgerMenu({ isOpen, onClose, onSectionSelect }: Hamb
             </div>
           </div>
         </div>
+         <div className="py-6 text-center border-t border-gray-200 dark:border-gray-800 mt-10">
+              <a
+                href="https://www.dinningspot.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <span className="font-normal">Powered by </span>
+                <span className="font-semibold">Dinning Spot</span>
+              </a>
+            </div>
+      </div>
       </div>
     </div>
   )

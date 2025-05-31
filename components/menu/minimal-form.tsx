@@ -182,7 +182,7 @@ export default function MinimalForm({ onSubmit, onClose, initialData, message, w
             // Auto-submit after a short delay to show the greeting card
             setTimeout(() => {
               onSubmit() // Close the form after showing greeting
-            }, 2000)
+            }, 200000)
             return
           } catch (e) {
             console.error("Error parsing stored data:", e)
@@ -224,7 +224,7 @@ export default function MinimalForm({ onSubmit, onClose, initialData, message, w
         // Auto-submit after a short delay to show the greeting card and register with new website
         setTimeout(() => {
           handleGreetingCardSubmit()
-        }, 2000)
+        }, 200000)
       } else {
         // No user data found anywhere, show the form
         setShowForm(true)

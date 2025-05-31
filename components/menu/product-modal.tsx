@@ -25,7 +25,8 @@ export default function ProductModal({ product, isOpen, onClose, IMAGE_BASE_URL 
   const [isMobile, setIsMobile] = useState(false)
   const [windowHeight, setWindowHeight] = useState(0)
   const [isRounded, setIsRounded] = useState(true)
-
+const [isTruncated, setIsTruncated] = useState(true);
+const [needsReadMore, setNeedsReadMore] = useState(false);
   // Check if device is mobile and get window dimensions
   useEffect(() => {
     const checkMobile = () => {
@@ -45,6 +46,25 @@ export default function ProductModal({ product, isOpen, onClose, IMAGE_BASE_URL 
     }
   }, [isOpen])
 
+  useEffect(() => {
+  if (product.description) {
+    // Create a temporary div to measure content
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = product.description;
+    document.body.appendChild(tempDiv);
+    
+    const fullHeight = tempDiv.scrollHeight;
+    tempDiv.style.webkitLineClamp = '2';
+    tempDiv.style.display = '-webkit-box';
+    tempDiv.style.webkitBoxOrient = 'vertical';
+    tempDiv.style.overflow = 'hidden';
+    
+    const clampedHeight = tempDiv.scrollHeight;
+    document.body.removeChild(tempDiv);
+    
+    setNeedsReadMore(fullHeight > clampedHeight);
+  }
+}, [product.description]);
   // Handle click outside to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -141,7 +161,7 @@ export default function ProductModal({ product, isOpen, onClose, IMAGE_BASE_URL 
   }
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 p-modal">
       {/* Separate backdrop div with blur */}
       <div className="fixed inset-0 bg-black/20 dark:bg-white/10 backdrop-blur-[7px]" onClick={onClose} />
 
@@ -167,13 +187,12 @@ export default function ProductModal({ product, isOpen, onClose, IMAGE_BASE_URL 
             {!isMobile && (
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-full p-1 z-10"
+                className="absolute top-6 right-6 bg-white dark:bg-gray-800 rounded-full p-1 z-10"
               >
                 <X size={24} className="text-gray-800 dark:text-gray-200" />
               </button>
             )}
-
-            {/* Media Section - Video, Image or Initials */}
+{hasVideo && (
             <div className="w-full p-[15px] aspect-video overflow-hidden">
               {hasVideo ? (
                 // YouTube Video
@@ -203,7 +222,7 @@ export default function ProductModal({ product, isOpen, onClose, IMAGE_BASE_URL 
                 </div>
               )}
             </div>
-
+)}
             {/* Product Details */}
             <div className="p-4">
               <div className="flex items-start mb-2">
@@ -234,10 +253,6 @@ export default function ProductModal({ product, isOpen, onClose, IMAGE_BASE_URL 
                   )}
                 </div>
 
-                <div className="flex items-center ml-auto">
-                  <Star size={16} className="text-yellow-500 mr-1" />
-                  <span className="text-sm font-medium">3.9 (75)</span>
-                </div>
               </div>
 
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
@@ -248,9 +263,16 @@ export default function ProductModal({ product, isOpen, onClose, IMAGE_BASE_URL 
                 ₹{product.numbers?.numberOne}
               </div>
 
-              <p className="text-gray-700 dark:text-gray-300">
-                {product.description?.replace(/<\/?(p|span)[^>]*>/g, "") || ""}
-              </p>
+              {product.description && (
+  <div className="mb-4 p-desc">
+    <div 
+      className={`text-gray-700 dark:text-gray-300`}
+      dangerouslySetInnerHTML={{ __html: product.description }}
+    />
+    
+   
+  </div>
+)}
 
               {/* Bottom Close Button - Only for mobile */}
               {isMobile && (

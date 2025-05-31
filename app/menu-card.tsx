@@ -940,13 +940,28 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
                             >
                               ₹{getOutletPrice(item)}
                             </div>
-                            {item.description && (
-                              <div
-                                className={`text-gray-600 dark:text-gray-400 ${isMobile ? "text-xs" : "text-sm"} leading-tight`}
-                              >
-                                <div className="line-clamp-2">{item.description}</div>
-                              </div>
-                            )}
+                           {item.description && (
+  <div className="text-gray-600 dark:text-gray-400 leading-tight text-[14px]">
+    {(() => {
+      // Remove HTML tags and get plain text
+      const plainText = item.description.replace(/<[^>]*>/g, '');
+      const maxLength = 98;
+      
+      if (plainText.length <= maxLength) {
+        return <span>{plainText}</span>;
+      }
+      
+      return (
+        <span>
+          {plainText.slice(0, maxLength)}...
+          <span className="text-orange-500 dark:text-orange-400 font-medium ml-1">
+            Read more
+          </span>
+        </span>
+      );
+    })()}
+  </div>
+)}
                           </div>
                         </div>
                       ))}
@@ -966,13 +981,13 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
 
             <div className="py-6 text-center border-t border-gray-200 dark:border-gray-800 mt-10">
               <a
-                href="https://www.technolitics.com"
+                href="https://www.dinningspot.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
                 <span className="font-normal">Powered by </span>
-                <span className="font-semibold">Technolitics</span>
+                <span className="font-semibold">Dinning Spot</span>
               </a>
             </div>
           </div>

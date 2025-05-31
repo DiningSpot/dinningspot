@@ -1,6 +1,6 @@
 "use client"
 import type React from "react"
-
+import { useState,useEffect } from "react"
 import { ChevronDown } from "lucide-react"
 
 interface ProductCardProps {
@@ -19,6 +19,12 @@ function getInitials(title: string | null): string {
 }
 
 export default function ProductCard({ product, isMobile, onProductClick, IMAGE_BASE_URL }: ProductCardProps) {
+
+  const [isTruncated, setIsTruncated] = useState(true);
+
+const toggleReadMore = () => {
+  setIsTruncated(!isTruncated);
+};
   // Remove this line:
   // const [isExpanded, setIsExpanded] = useState(false)
 
@@ -101,34 +107,51 @@ export default function ProductCard({ product, isMobile, onProductClick, IMAGE_B
           ₹{product.numbers?.numberOne}
         </div>
         {/* Description with Read More */}
-        {product.description && (
-          <div className={`text-gray-600 dark:text-gray-400 ${isMobile ? "text-xs" : "text-sm"} leading-tight`}>
-            {/* Update the description rendering to always show truncated text */}
-            {/* Replace the dangerouslySetInnerHTML section with: */}
-            <div
-              dangerouslySetInnerHTML={{
-                __html: (() => {
-                  const plainText = product.description?.replace(/<\/?(p|span)[^>]*>/g, "") || ""
-                  const charLimit = isMobile ? 20 : 50
-                  if (plainText.length <= charLimit) return plainText
-                  return plainText.slice(0, charLimit) + "..."
-                })(),
-              }}
-              className="inline"
-            />
-            {product.description &&
-              product.description.replace(/<\/?(p|span)[^>]*>/g, "").length > (isMobile ? 20 : 50) && (
-                <button
-                  onClick={toggleReadMore}
-                  className={`ml-1 text-orange-500 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium inline-flex items-center ${
-                    isMobile ? "text-xs" : "text-sm"
-                  }`}
-                >
-                  Read more <ChevronDown size={isMobile ? 12 : 16} className="ml-0.5" />
-                </button>
-              )}
-          </div>
-        )}
+    
+            {product.description && (
+  <div className={`text-gray-600 dark:text-gray-400 ${isMobile ? "text-xs" : "text-sm"} leading-tight`}>
+    {/* Container for the full description (hidden when truncated) */}
+    {!isTruncated && (
+      <div 
+        dangerouslySetInnerHTML={{ __html: product.description }}
+        className="description-content"
+      />
+    )}
+    
+    {/* Container for the truncated version (shown when truncated) */}
+    {isTruncated && (
+      <div className="relative">
+        <div 
+          dangerouslySetInnerHTML={{ __html: product.description }}
+          className="description-content overflow-hidden"
+          style={{
+            maxHeight: isMobile ? '60px' : '80px',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+            maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)'
+          }}
+        />
+        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent dark:from-gray-900 dark:to-transparent"></div>
+      </div>
+    )}
+    
+    {/* Read more/less button */}
+    <button
+      onClick={toggleReadMore}
+      className={`mt-1 text-orange-500 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium inline-flex items-center ${
+        isMobile ? "text-xs" : "text-sm"
+      }`}
+    >
+      {isTruncated ? 'Read more' : 'Read less'} 
+      <ChevronDown 
+        size={isMobile ? 12 : 16} 
+        className={`ml-0.5 transition-transform ${isTruncated ? '' : 'rotate-180'}`} 
+      />
+    </button>
+  </div>
+)}
+    
+
+
       </div>
     </div>
   )
