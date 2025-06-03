@@ -58,7 +58,7 @@ export default function GreetingCard({
   useEffect(() => {
     const timer = setTimeout(() => {
       onSubmit()
-    }, 300000)
+    },2000)
 
     return () => clearTimeout(timer)
   }, [onSubmit])
