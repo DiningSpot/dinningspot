@@ -695,6 +695,7 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
             isOpen={isHamburgerOpen}
             onClose={() => setIsHamburgerOpen(false)}
             onSectionSelect={setActiveSection}
+            websiteId={websiteId}
           />
 
           {activeSection === "offers" && (
