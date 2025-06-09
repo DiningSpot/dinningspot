@@ -166,7 +166,7 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
   const [fbPixelId, setFbPixelId] = useState<string | null>(null)
 
   // Static IDs for GA4 and Facebook Pixel (replace with actual IDs)
-  const staticGa4Id = "G-STATICID123"
+  const staticGa4Id = "G-H6L11CS970"
   const staticFbPixelId = "STATICFBPIXEL123"
 
   const featureTypeColors: Record<string, string> = {
