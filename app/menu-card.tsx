@@ -14,7 +14,6 @@ import FeedbackPage from "@/components/menu/feedback-page"
 import MinimalForm from "@/components/menu/minimal-form"
 import OfferPopup from "@/components/menu/offerpopup"
 import { API_BASE_URL, IMAGE_BASE_URL, VEG_ONLY_ID, NON_VEG_ID } from "@/constants"
-import { useRouter } from "next/navigation"
 
 // Add this interface near your other interfaces
 interface PreloaderProps {
@@ -164,8 +163,12 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
   const [hasUserData, setHasUserData] = useState(false)
   const [gtmId, setGtmId] = useState<string | null>(null)
   const [fbPixelId, setFbPixelId] = useState<string | null>(null)
+  const [hasNonVeg, setHasNonVeg] = useState(false)
+  const [hasEgg, setHasEgg] = useState(false)
+  const [hasVeg, setHasVeg] = useState(false)
+  const [singleFoodType, setSingleFoodType] = useState<boolean>(false)
 
-  // Static IDs for GA4 and Facebook Pixel (replace with actual IDs)
+  // Static IDs for GA4 and Facebook Pixel
   const staticGa4Id = "G-H6L11CS970"
   const staticFbPixelId = "STATICFBPIXEL123"
 
@@ -217,7 +220,6 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
   useEffect(() => {
     // Static GA4 script
     if (staticGa4Id && !document.getElementById(`ga4-script-${staticGa4Id}`)) {
-      // GA4 script (head)
       const ga4Script = document.createElement("script")
       ga4Script.id = `ga4-script-${staticGa4Id}`
       ga4Script.async = true
@@ -239,7 +241,6 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
 
     // Static FB Pixel script
     if (staticFbPixelId && !document.getElementById(`fb-pixel-script-static-${staticFbPixelId}`)) {
-      // FB Pixel script (head)
       const fbScript = document.createElement("script")
       fbScript.id = `fb-pixel-script-static-${staticFbPixelId}`
       fbScript.async = true
@@ -254,7 +255,6 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
       `
       document.head.appendChild(fbScript)
 
-      // FB Pixel noscript (body)
       const fbNoScript = document.createElement("noscript")
       fbNoScript.id = `fb-pixel-noscript-static-${staticFbPixelId}`
       fbNoScript.innerHTML = `
@@ -286,7 +286,6 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
   useEffect(() => {
     // Dynamic GTM script
     if (gtmId && !document.getElementById(`gtm-script-${gtmId}`)) {
-      // GTM script (head)
       const gtmScript = document.createElement("script")
       gtmScript.id = `gtm-script-${gtmId}`
       gtmScript.async = true
@@ -298,7 +297,6 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
       `
       document.head.appendChild(gtmScript)
 
-      // GTM noscript (body)
       const gtmNoScript = document.createElement("noscript")
       gtmNoScript.id = `gtm-noscript-${gtmId}`
       gtmNoScript.innerHTML = `
@@ -311,7 +309,6 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
 
     // Dynamic FB Pixel script
     if (fbPixelId && fbPixelId !== staticFbPixelId && !document.getElementById(`fb-pixel-script-dynamic-${fbPixelId}`)) {
-      // FB Pixel script (head)
       const fbScript = document.createElement("script")
       fbScript.id = `fb-pixel-script-dynamic-${fbPixelId}`
       fbScript.async = true
@@ -326,7 +323,6 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
       `
       document.head.appendChild(fbScript)
 
-      // FB Pixel noscript (body)
       const fbNoScript = document.createElement("noscript")
       fbNoScript.id = `fb-pixel-noscript-dynamic-${fbPixelId}`
       fbNoScript.innerHTML = `
@@ -478,6 +474,18 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
         const outletFoodItems = foodItemsData.filter((item: any) => {
           return item?.outletPrices?.some((price: any) => price?.outlet?._id === outletId)
         })
+
+        // Check for food types
+        const hasVegItems = outletFoodItems.some((item: any) => item.food_type === "Veg-Only")
+        const hasNonVegItems = outletFoodItems.some((item: any) => item.food_type === "Non-Veg")
+        const hasEggItems = outletFoodItems.some((item: any) => item.food_type.includes("Egg"))
+        setHasVeg(hasVegItems)
+        setHasNonVeg(hasNonVegItems)
+        setHasEgg(hasEggItems)
+
+        // Determine if all items belong to a single food type
+        const foodTypeCount = [hasVegItems, hasNonVegItems, hasEggItems].filter(Boolean).length
+        setSingleFoodType(foodTypeCount === 1)
 
         const featureTypesData = await fetchFeatureTypes(websiteId)
         setFeatureTypes(featureTypesData || [])
@@ -669,7 +677,7 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
         {showPreloader && <Preloader outletIcon={outletIcon} />}
       </AnimatePresence>
       {!showPreloader && (
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="relative max-w-6xl w-full mx-auto px-4 sm:px-6">
           <div className="fixed right-6 bottom-8 z-30">
             <button
               className="bg-orange-600 hover:bg-orange-700 transition-colors w-16 h-16 rounded-full flex flex-col justify-center items-center text-white shadow-lg"
@@ -757,72 +765,84 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
           </div>
 
           <div className={`pt-4 ${isFixed ? "mt-20" : ""}`}>
-            <div className="w-full md:hidden overflow-x-auto touch-pan-x pb-2 mb-4 scrollbar-hide">
-              <div className="flex gap-3 pr-4 w-max">
-                <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 whitespace-nowrap">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={showVegOnly} onChange={handleVegToggle} className="sr-only peer" />
-                    <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-green-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                  </label>
-                  <span className="text-xs font-medium dark:text-white">Veg Only</span>
+            {!singleFoodType && (hasVeg || hasNonVeg || hasEgg) && (
+              <div className="w-full md:hidden overflow-x-auto touch-pan-x pb-2 mb-4 scrollbar-hide">
+                <div className="flex gap-3 pr-4 w-max">
+                  {hasVeg && (
+                    <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 whitespace-nowrap">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked={showVegOnly} onChange={handleVegToggle} className="sr-only peer" />
+                        <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-green-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                      </label>
+                      <span className="text-xs font-medium dark:text-white">Veg Only</span>
+                    </div>
+                  )}
+                  {hasNonVeg && (
+                    <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 whitespace-nowrap">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={showNonVegOnly}
+                          onChange={handleNonVegToggle}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-red-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-red-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                      </label>
+                      <span className="text-xs font-medium dark:text-white">Non-Veg</span>
+                    </div>
+                  )}
+                  {hasEgg && (
+                    <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 whitespace-nowrap">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked={showEggOnly} onChange={handleEggToggle} className="sr-only peer" />
+                        <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-yellow-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-yellow-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                      </label>
+                      <span className="text-xs font-medium dark:text-white">Egg Only</span>
+                    </div>
+                  )}
                 </div>
-
-                <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 whitespace-nowrap">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showNonVegOnly}
-                      onChange={handleNonVegToggle}
-                      className="sr-only peer"
-                    />
-                    <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-red-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-red-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                  </label>
-                  <span className="text-xs font-medium dark:text-white">Non-Veg</span>
-                </div>
-
-                <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 whitespace-nowrap">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked={showEggOnly} onChange={handleEggToggle} className="sr-only peer" />
-                    <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-yellow-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-yellow-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                  </label>
-                  <span className="text-xs font-medium dark:text-white">Egg Only</span>
-                </div>
               </div>
-            </div>
+            )}
 
-            <div className="hidden md:flex flex-wrap gap-3 mb-4">
-              <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked={showVegOnly} onChange={handleVegToggle} className="sr-only peer" />
-                  <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-green-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                </label>
-                <span className="text-sm font-medium dark:text-white">Veg Only</span>
+            {!singleFoodType && (hasVeg || hasNonVeg || hasEgg) && (
+              <div className="hidden md:flex flex-wrap gap-3 mb-4">
+                {hasVeg && (
+                  <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={showVegOnly} onChange={handleVegToggle} className="sr-only peer" />
+                      <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-green-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                    <span className="text-sm font-medium dark:text-white">Veg Only</span>
+                  </div>
+                )}
+                {hasNonVeg && (
+                  <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showNonVegOnly}
+                        onChange={handleNonVegToggle}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-red-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-red-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                    <span className="text-sm font-medium dark:text-white">Non-Veg</span>
+                  </div>
+                )}
+                {hasEgg && (
+                  <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={showEggOnly} onChange={handleEggToggle} className="sr-only peer" />
+                      <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-yellow-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-yellow-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                    <span className="text-sm font-medium dark:text-white">Egg Only</span>
+                  </div>
+                )}
               </div>
-
-              <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showNonVegOnly}
-                    onChange={handleNonVegToggle}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-red-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-red-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                </label>
-                <span className="text-sm font-medium dark:text-white">Non-Veg</span>
-              </div>
-
-              <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked={showEggOnly} onChange={handleEggToggle} className="sr-only peer" />
-                  <div className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-yellow-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-yellow-600 after:peer-checked:border-2 after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                </label>
-                <span className="text-sm font-medium dark:text-white">Egg Only</span>
-              </div>
-            </div>
+            )}
 
             <div className="w-full mb-6">
-              <div className="md:hidden w-full overflow-x-auto touch-pan-x itsy-pan-x pb-2 scrollbar-hide">
+              <div className="md:hidden w-full overflow-x-auto touch-pan-x pb-2 scrollbar-hide">
                 <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="flex w-max h-10 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
                     <TabsTrigger
@@ -941,28 +961,27 @@ export default function MenuCard({ websiteId, outletId }: MenuCardProps) {
                             >
                               ₹{getOutletPrice(item)}
                             </div>
-                           {item.description && (
-  <div className="text-gray-600 dark:text-gray-400 leading-tight text-[14px]">
-    {(() => {
-      // Remove HTML tags and get plain text
-      const plainText = item.description.replace(/<[^>]*>/g, '');
-      const maxLength = 98;
-      
-      if (plainText.length <= maxLength) {
-        return <span>{plainText}</span>;
-      }
-      
-      return (
-        <span>
-          {plainText.slice(0, maxLength)}...
-          <span className="text-orange-500 dark:text-orange-400 font-medium ml-1">
-            Read more
-          </span>
-        </span>
-      );
-    })()}
-  </div>
-)}
+                            {item.description && (
+                              <div className="text-gray-600 dark:text-gray-400 leading-tight text-[14px]">
+                                {(() => {
+                                  const plainText = item.description.replace(/<[^>]*>/g, '')
+                                  const maxLength = 98
+
+                                  if (plainText.length <= maxLength) {
+                                    return <span>{plainText}</span>
+                                  }
+
+                                  return (
+                                    <span>
+                                      {plainText.slice(0, maxLength)}...
+                                      <span className="text-orange-500 dark:text-orange-400 font-medium ml-1">
+                                        Read more
+                                      </span>
+                                    </span>
+                                  )
+                                })()}
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
