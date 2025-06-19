@@ -46,7 +46,7 @@ export default function GreetingCard({
       } catch (error) {
         console.error('Fetch error:', error)
         setLoadingState('error')
-        setOutletIcon("1747734790831_html-5.png")
+        setOutletIcon("white.png")
       }
     }
 
